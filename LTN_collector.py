@@ -2,6 +2,8 @@ import requests,datetime,random,time,os,re,json
 import pandas as pd
 from bs4 import BeautifulSoup as BS
 
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'}
+
 def date_creater(date_start = None,date_end = None):
 	if date_start is None:
 		datestart = '2021-12-31'
@@ -77,11 +79,11 @@ def key_words_search():
 
 def usual_news(ban_en,page_set = 25):
 	# ban_en = input("Input forum:")
-	break_page = 1;start_data = 0
+	break_page = 6;start_data = 100
 	while break_page < page_set +1:
 		print(break_page)
 		page_url = "https://news.ltn.com.tw/ajax/breakingnews/{}/{}".format(ban_en,break_page)
-		page_req = requests.get(page_url)
+		page_req = requests.get(page_url,headers = HEADERS)
 		page_json = page_req.json()
 		url_list = [];title_list = [];type_list = [];date_list = [];cont_list = []
 		# print(page_json["data"]["20"])
