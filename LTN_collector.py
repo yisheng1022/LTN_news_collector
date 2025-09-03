@@ -79,7 +79,7 @@ def key_words_search():
 
 def usual_news(ban_en,page_set = 25):
 	# ban_en = input("Input forum:")
-	break_page = 6;start_data = 100
+	break_page = 1;start_data = 0
 	while break_page < page_set +1:
 		print(break_page)
 		page_url = "https://news.ltn.com.tw/ajax/breakingnews/{}/{}".format(ban_en,break_page)
