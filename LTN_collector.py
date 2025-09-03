@@ -124,7 +124,7 @@ func_in = "2"#input("Function --> 1:Keyword 2:Forums :")
 if func_in == "1":
 	key_words_search()
 elif func_in == "2":
-	forum_list = ["life","world","local","politics","society"]
+	forum_list = ["world","politics","society"]
 	for one_f in forum_list:
 		usual_news(one_f)
 		clean_dup("LTN_{}.csv".format(one_f))
