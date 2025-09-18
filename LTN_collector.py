@@ -79,6 +79,8 @@ def key_words_search():
 
 def usual_news(ban_en,page_set = 25):
 	# ban_en = input("Input forum:")
+	temp_now = datetime.datetime.today()
+	str_now = temp_now.strftime('%Y%m%d')
 	break_page = 1;start_data = 0
 	while break_page < page_set +1:
 		print(break_page)
@@ -97,10 +99,10 @@ def usual_news(ban_en,page_set = 25):
 		break_page += 1;start_data += 20
 		# news_dict = {"Title":title_list,"News_Type":type_list,"date":date_list,"content":cont_list,"url":url_list}
 		news_pd = pd.DataFrame({"Title":title_list,"News_Type":type_list,"date":date_list,"content":cont_list,"url":url_list})
-		if os.path.isfile("LTN_{}.csv".format(ban_en)):
-			news_pd.to_csv("LTN_{}.csv".format(ban_en),header = False,index = False,mode = "a+")
+		if os.path.isfile("LTN_{}_{}.csv".format(ban_en,str_now)):
+			news_pd.to_csv("LTN_{}_{}.csv".format(ban_en,str_now),header = False,index = False,mode = "a+")
 		else:
-			news_pd.to_csv("LTN_{}.csv".format(ban_en),header = True,index = False,mode = "w")
+			news_pd.to_csv("LTN_{}_{}.csv".format(ban_en,str_now),header = True,index = False,mode = "w")
 
 def clean_dup(f_name):
 	# f_name = input("Input file name: ")
