@@ -129,10 +129,12 @@ if func_in == "1":
 	key_words_search()
 elif func_in == "2":
 	forum_list = ["politics","society","world"]
+	temp_now = datetime.datetime.today()
+	str_now = temp_now.strftime('%Y%m%d')
 	for one_f in forum_list:
 		usual_news(one_f)
-		clean_dup("LTN_{}.csv".format(one_f))
-		date_func("LTN_{}.csv".format(one_f))
+		# clean_dup("LTN_{}.csv".format(one_f))
+		date_func("LTN_{}_{}.csv".format(one_f,str_now))
 elif func_in == "3":
 	print("Access denied")
 elif func_in == "4":
