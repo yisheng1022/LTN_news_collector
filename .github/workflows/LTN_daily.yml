@@ -23,14 +23,20 @@ jobs:
 
       - name: Run LTN crawler script
         run: python LTN_collector.py
-
+      
+      - name: Collect CSVs into folder
+        run: |
+          mkdir -p LTN_data
+          mv LTN_*.csv LTN_data/ 2>/dev/null || true
+      
       - name: Push result csv to repo
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add LTN_data/*.csv
+          git add -A
           git commit -m "Update daily LTN data: $(date +'%Y-%m-%d')" || echo "No changes"
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
           git push origin HEAD:main
+
