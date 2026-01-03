@@ -85,8 +85,10 @@ def usual_news(ban_en,page_set = 25):
 	while break_page < page_set +1:
 		print(break_page)
 		page_url = "https://news.ltn.com.tw/ajax/breakingnews/{}/{}".format(ban_en,break_page)
+		
 		page_req = requests.get(page_url,headers = HEADERS)
-		page_json = page_req.json()
+		page_content = page_req.content.decode('utf-8-sig')
+		page_json = json.loads(page_content)
 		url_list = [];title_list = [];type_list = [];date_list = [];cont_list = []
 		# print(page_json["data"]["20"])
 		for d in range(start_data,start_data+20):
