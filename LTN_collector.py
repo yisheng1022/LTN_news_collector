@@ -43,12 +43,17 @@ def get_art_cont(cont_type,one_url):
 			time_l = time_l + a_time.text
 			time_l = re.sub('[\u4e00-\u9fa5]','',time_l)
 			time_l = re.sub('[a-zA-Z]','',time_l)
-	else:
+	elif (cont_type == "評論"):
 		for a_time in cont_bs.select("span.time"):
-			time_l = time_l + a_time.text
+			time_l = time_l + a_time.text.strip()
 			time_l = re.sub('[\u4e00-\u9fa5]','',time_l)
 			time_l = re.sub('[a-zA-Z]','',time_l)
-	time.sleep(random.randint(1,3))
+	else:
+		for a_time in cont_bs.select("span.article_time"):
+			time_l = time_l + a_time.text.strip()
+			time_l = re.sub('[\u4e00-\u9fa5]','',time_l)
+			time_l = re.sub('[a-zA-Z]','',time_l)
+	# time.sleep(random.randint(1,3))
 	return content,time_l
 
 # print(get_art_cont("健康","https://health.ltn.com.tw/article/breakingnews/4159454"))
@@ -75,7 +80,7 @@ def key_words_search():
 			news_pd.to_csv(start_date + "_" + end_date + key_words + "LTN_news.csv",index = False,header = False,mode = "a+")
 		else:
 			news_pd.to_csv(start_date + "_" + end_date + key_words + "LTN_news.csv",index = False,header = True,mode = "w")
-		time.sleep(random.randint(5,10))
+		time.sleep(random.randint(3,7))
 
 def usual_news(ban_en,page_set = 25):
 	# ban_en = input("Input forum:")
@@ -126,7 +131,7 @@ def date_func(f_name):
 	old_df.to_csv(f_name,header = True,index = False, mode = "w")
 
 print("******** LTN News collector ********")
-func_in = "2"#input("Function --> 1:Keyword 2:Forums :")
+func_in = "1"#input("Function --> 1:Keyword 2:Forums :")
 if func_in == "1":
 	key_words_search()
 elif func_in == "2":
