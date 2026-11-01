@@ -7,5 +7,9 @@ Scripts/
 Include/
 pyvenv.cfg
 __pycache__/
+data/
+*.zip
 *.py[cod]
 *$py.class
+config.py
+*.env

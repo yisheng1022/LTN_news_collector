@@ -30,6 +30,29 @@ def get_vote_news(vote_url):
         print(f"爬取內文失敗 ({vote_url}): {e}")
         return ""
 
+def json_search(search_keyword = ""):
+    news_list = []
+    end = False
+    page = 0
+    while not end:
+        json_url = f'https://udn.com/api/more?page={page}&id=search:{search_keyword}&channelId=2&type=searchword&last_page=233'
+        json_req = requests.get(json_url).text
+        json_data = json.loads(json_req)
+        end = json_data.get('end', True)
+        for one_news in json_data.get('lists', []):
+            news_url = 'https://udn.com' + one_news.get('titleLink', '')
+            record = {
+                'url': news_url,
+                'title': one_news.get('title'),
+                'datetime': one_news.get('time', {}).get('date'),
+                'category': one_news.get('cateTitle'),
+                'content': get_news_content(news_url)
+            }
+            news_list.append(record)
+        page += 1
+    df = pd.DataFrame(news_list)
+    return df
+
 def json_vote(page = 1, is_more = True):
     news_list = []
     while is_more:
@@ -42,7 +65,7 @@ def json_vote(page = 1, is_more = True):
             news_url = 'https://udn.com' + one_vote_news.get('url', '')
             record = {
                 'url': news_url,
-                'location': one_vote_news.get('location'),
+                'title': one_vote_news.get('title'),
                 'date': one_vote_news.get('time', {}).get('date').split(' ')[0],
                 'pub_time': one_vote_news.get('time', {}).get('date').split(' ')[1],
                 'content': get_vote_news(news_url),
