@@ -15,7 +15,7 @@ def date_creater(date_start = None,date_end = None):
 	date_list = []
 	while date_start < date_end:
 		date_list.append(date_start.strftime('%Y%m%d'))
-		date_start += datetime.timedelta(dayss=+1)
+		date_start += datetime.timedelta(days=+1)
 	date_list.append(date_end.strftime('%Y%m%d'))
 	return date_list
 
