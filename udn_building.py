@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup as BS
 import json
 import time
+import os
+import random
 
 # variable explanation = 
 # cate_id = 不同的版位分類(要聞、全球...)
@@ -30,38 +32,23 @@ def get_vote_news(vote_url):
         print(f"爬取內文失敗 ({vote_url}): {e}")
         return ""
 
-def json_search(search_keyword = ""):
+def udn_vote(page = 1,skip = 0,end = False):
     news_list = []
-    end = False
-    page = 0
+    empty_count = 1
     while not end:
-        json_url = f'https://udn.com/api/more?page={page}&id=search:{search_keyword}&channelId=2&type=searchword&last_page=233'
-        json_req = requests.get(json_url).text
-        json_data = json.loads(json_req)
-        end = json_data.get('end', True)
-        for one_news in json_data.get('lists', []):
-            news_url = 'https://udn.com' + one_news.get('titleLink', '')
-            record = {
-                'url': news_url,
-                'title': one_news.get('title'),
-                'datetime': one_news.get('time', {}).get('date'),
-                'category': one_news.get('cateTitle'),
-                'content': get_news_content(news_url)
-            }
-            news_list.append(record)
-        page += 1
-    df = pd.DataFrame(news_list)
-    return df
-
-def json_vote(page = 1, is_more = True):
-    news_list = []
-    while is_more:
-        vote_url = f'https://udn.com/vote2026/ajax/realtime?count=7787&skip=0&page={page}'
+        vote_url = f'https://udn.com/vote2026/ajax/realtime?count=99999&skip={skip}&page={page}'
+        print(vote_url)
         vote_json = requests.get(vote_url).text
         vote_data = json.loads(vote_json)
-        is_more = vote_data.get('end', True)
-        for one_vote_news in vote_data.get('lists', []):
-            print(one_vote_news['url'])
+        end = vote_data.get('end', True)
+        news_data = vote_data.get('lists', [])
+        if len(news_data) == 0:
+            empty_count += 1
+            if empty_count > 3:
+                break
+
+        for one_vote_news in news_data:
+            # print(one_vote_news['url'])
             news_url = 'https://udn.com' + one_vote_news.get('url', '')
             record = {
                 'url': news_url,
@@ -72,16 +59,22 @@ def json_vote(page = 1, is_more = True):
             }
             news_list.append(record)
         page += 1
-    df = pd.DataFrame(news_list)
-    return df
+        skip += 12
+        df = pd.DataFrame(news_list)
+        if os.path.isfile("Udn_vote.csv"):
+            df.to_csv("Udn_vote.csv",header = False,index = False,mode = "a+")
+        else:
+            df.to_csv("Udn_vote.csv",header = True,index = False,mode = "w")
+        time.sleep(random.randint(1,3))
 
-def json_main(cate_id, news_type = 'cate_latest_news', sub_id = '', channelID = 2, totalRecNo = 2000, fetch_content = True):
+def udn_normal_main(cate_id, news_type = 'cate_latest_news', sub_id = '', channelID = 2, totalRecNo = 2000, fetch_content = True):
     end = False
     page = 0
     news_records = []
     
     while not end:
         json_url = f'https://udn.com/api/more?page={page}&channelId={channelID}&type={news_type}&cate_id={cate_id}&sub_id={sub_id}&totalRecNo={totalRecNo}'
+        # print(json_url)
         json_req = requests.get(json_url).text
         json_data = json.loads(json_req)
         end = json_data.get('end', True)
@@ -98,34 +91,34 @@ def json_main(cate_id, news_type = 'cate_latest_news', sub_id = '', channelID = 
             if fetch_content:
                 record['content'] = get_news_content(news_url)
             news_records.append(record)
-
-        if end:
-            break
-        print(f'已完成第 {page} 頁的爬取，目前累計 {len(news_records)} 筆')
+        df = pd.DataFrame(news_records)
+        if os.path.isfile("Udn_{}.csv".format(cate_id)):
+            df.to_csv("Udn_{}.csv".format(cate_id),header = False,index = False,mode = "a+")
+        else:
+            df.to_csv("Udn_{}.csv".format(cate_id),header = True,index = False,mode = "w")
         page += 1
 
-    df = pd.DataFrame(news_records)
-    return df
 
 def main():
-    cate_id = input("請輸入版位代碼(6638:要聞,7225:全球,6639:社會):")
-    news_type = input("請輸入新聞類別(latest:最新,sub:其他):")
-    if news_type == 'latest':
-        news_type = 'cate_latest_news'
-    elif news_type == 'sub':
-        news_type = 'subcate_articles'
-        sub_id = input("請輸入次分類代碼(124652:要聞選戰,6656:要聞政治,10930要聞軍事,124061:全球中東戰火,6809全球國際焦點):")
-
-    fetch_content = input("是否需要內文？(y/n)")
-    if fetch_content == 'y':
-        fetch_content = True
-    else:
-        fetch_content = False
-    json_main(cate_id, news_type, sub_id, fetch_content)
+    choice = input("請選擇(1:一般新聞,2:投票新聞):")
+    if choice == '1':
+        cate_id = input("請輸入版位代碼(6638:要聞,7225:全球,6639:社會):")
+        news_type = input("請輸入新聞類別(latest:最新,sub:其他):")
+        if news_type == 'latest':
+            news_type = 'cate_latest_news'
+        elif news_type == 'sub':
+            news_type = 'subcate_articles'
+            sub_id = input("請輸入次分類代碼(124652:要聞選戰,6656:要聞政治,10930要聞軍事,124061:全球中東戰火,6809全球國際焦點):")
+        fetch_content = input("是否需要內文？(y/n)")
+        if fetch_content == 'y':
+            fetch_content = True
+        else:
+            fetch_content = False
+        udn_normal_main(cate_id, news_type, sub_id, fetch_content)
+    elif choice == '2':
+        udn_vote(page = 450, skip = 5388)
 
 main()
-# json_vote()
-get_vote_news('https://udn.com/vote2026/story/124652/9838052')
 
 
 
