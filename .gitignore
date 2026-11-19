@@ -8,6 +8,7 @@ Include/
 pyvenv.cfg
 __pycache__/
 data/
+<<<<<<< Updated upstream
 *.zip
 *.py[cod]
 *$py.class
@@ -16,3 +17,10 @@ config.py
 *.env
 *.model*
 *.dict
+=======
+*.py[cod]
+*$py.class
+*.zip
+*.cfg
+config.py
+>>>>>>> Stashed changes
