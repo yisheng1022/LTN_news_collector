@@ -27,16 +27,16 @@ def get_art_cont(cont_type,one_url):
 	garbage_text = '不用抽 不用搶 現在用APP看新聞 保證天天中獎\u3000\n    點我下載APP\u3000\n    按我看活動辦法'
 	if (cont_type == "評論") | (cont_type == "娛樂") | (cont_type == "財經") | (cont_type == "玩咖") | (cont_type == "體育") | (cont_type == "3C") | (cont_type == "時尚") | (cont_type == "財經週報"):
 		for a_content in cont_bs.select("div.text p"):
-			content = content + a_content.text.replace(garbage_text,"").replace("\n","").replace("\u3000","")
+			content = content + "".join(a_content.text.replace(garbage_text,"").replace("\u3000","").splitlines())
 	elif (cont_type == "汽車") | (cont_type == "地產"):
 		for a_content in cont_bs.select("div.text.boxTitle p"):
-			content = content + a_content.text.replace(garbage_text,"").replace("\n","").replace("\u3000","")
+			content = content + "".join(a_content.text.replace(garbage_text,"").replace("\u3000","").splitlines())
 	elif (cont_type == "食譜"):
 		for a_content in cont_bs.select("div.text.cookbook.boxTitle p"):
-			content = content + a_content.text.replace(garbage_text,"").replace("\n","").replace("\u3000","")
+			content = content + "".join(a_content.text.replace(garbage_text,"").replace("\u3000","").splitlines())
 	else:
 		for a_content in cont_bs.select("div.text.boxTitle.boxText p"):
-			content = content + a_content.text.replace(garbage_text,"").replace("\n","").replace("\u3000","")
+			content = content + "".join(a_content.text.replace(garbage_text,"").replace("\u3000","").splitlines())
 	time_l = ""
 	if (cont_type == "娛樂"):
 		for a_time in cont_bs.select("time.time"):
@@ -67,7 +67,7 @@ def key_words_search():
 		paper_url = "https://search.ltn.com.tw/list?keyword={}&start_time={}&end_time={}&type=all&page={}".format(key_words,start_date,end_date,page)
 		page_req = requests.get(paper_url)
 		page_bs = BS(page_req.text,'html.parser')
-		title_list = [one_title['title'] for one_title in page_bs.select("div.cont a.tit")]
+		title_list = ["".join(one_title['title'].splitlines()) for one_title in page_bs.select("div.cont a.tit")]
 		title_len = len(title_list); print("Page No.", page ," got ",title_len," titles")
 		type_list = [one_type.text for one_type in page_bs.select("div.cont i")]
 		url_list = [one_url['href'] for one_url in page_bs.select("div.cont a.http")]
@@ -131,7 +131,7 @@ def date_func(f_name):
 	old_df.to_csv(f_name,header = True,index = False, mode = "w")
 
 print("******** LTN News collector ********")
-func_in = "1"#input("Function --> 1:Keyword 2:Forums :")
+func_in = input("Function --> 1:Keyword 2:Forums :")
 if func_in == "1":
 	key_words_search()
 elif func_in == "2":

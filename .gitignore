@@ -12,4 +12,7 @@ data/
 *.py[cod]
 *$py.class
 config.py
+.env
 *.env
+*.model*
+*.dict

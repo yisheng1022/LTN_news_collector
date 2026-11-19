@@ -116,7 +116,7 @@ def main():
             fetch_content = False
         udn_normal_main(cate_id, news_type, sub_id, fetch_content)
     elif choice == '2':
-        udn_vote(page = 450, skip = 5388)
+        udn_vote(page = 1, skip = 0)
 
 main()
 

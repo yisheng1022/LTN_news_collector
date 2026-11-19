@@ -8,6 +8,9 @@ import pyLDAvis.gensim_models
 from gensim import corpora
 from gensim.models import LdaModel, CoherenceModel
 
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei'] 
+plt.rcParams['axes.unicode_minus'] = False
+
 def seg_model_choose(method='tagger'):
     if method == 'tagger':
         from ckiptagger import WS, POS, data_utils
@@ -23,6 +26,7 @@ def seg_model_choose(method='tagger'):
 
 
 def seg_function(df, method='transformers', output_file="20250101_20261027沈伯洋LTN_news_seg.csv"):
+    df['content'] = df['content'].apply(lambda x: re.sub(r"[a-zA-Z]", '', str(x)))
     df['content'] = df['content'].apply(lambda x: re.sub(r"[^\w\s\u4e00-\u9fa5]", '', str(x)))
     news_list = df['content'].tolist()
     ws, pos = seg_model_choose(method)
@@ -195,13 +199,78 @@ def predict_topic(model,dictionary,doc_content, with_pos = True):
     main_topic = max(doc_topics, key=lambda x: x[1])
     return main_topic[0], round(float(main_topic[1]),3)
 
+def merge_all_news(file_list,merge_file_name):
+    df_list = []
+    for one_df in file_list:
+        df_list.append(pd.read_csv(one_df))
+    all_news_df = pd.concat(df_list,ignore_index=True)
+    all_news_df.drop_duplicates(subset=['url'],inplace=True,keep='first')
+    all_news_df.to_csv(merge_file_name,index = False, encoding = 'utf-8-sig')
 
+
+def draw_topic_distribute(df):
+
+    import numpy as np
+    import matplotlib.dates as mdates
+    import ast
+
+    topic_name_df = pd.read_csv('gemini_topic_namming_result.csv')
+    topic_name_df['original_topic_num'] = topic_name_df['topic_id'].apply(lambda x: int(x.split(' ')[1].strip())-1)
+    topic_name_df['topic_chinese_name'] = topic_name_df['result'].apply(lambda x: ast.literal_eval(x)['topic_name'])
+
+
+    df.dropna(subset = ['date'],ignore_index=True,inplace = True)
+    df['pub_date'] = df['date'].apply(lambda x: str(x).split(' ')[0])
+    df['pub_time'] = df['date'].apply(lambda x: str(x).split(' ')[1])
     
-    
+    df['pub_date'] = pd.to_datetime(df['pub_date'], format = "%Y/%m/%d")
+    df = df[df['pub_date'] > '2025-12-31']
+    df
+    count_df = df.groupby(['pub_date', 'topic']).size().unstack(fill_value=0).asfreq('D', fill_value=0)
+    smooth_df = count_df.rolling(window=7, min_periods=1).mean()
+
+    num_topics = len(count_df.columns)
+    colors = [plt.cm.turbo(i) for i in np.linspace(0, 0.95, num_topics)]
+    linestyles = ['-', '--']  # 前後交替實線與虛線，增強辨識度
+
+    plot_configs = [
+        (count_df, '沈伯洋各主題隨時間變化趨勢（每日原始數據）', '新聞篇數（每日）'),
+        (smooth_df, '沈伯洋各主題隨時間變化趨勢（7 日移動平均）', '新聞篇數（7日均值）'),
+    ]
+
+    for data_df, title, ylabel in plot_configs:
+        fig, ax = plt.subplots(figsize=(16, 9))
+
+        for idx, col in enumerate(data_df.columns):
+            ax.plot(
+                data_df.index,
+                data_df[col],
+                label=col,
+                color=colors[idx],
+                linestyle=linestyles[idx % 2],
+                linewidth=1.8
+            )
+
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=14))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        ax.xaxis.set_minor_locator(mdates.DayLocator(interval=7))
+        ax.tick_params(axis='x', rotation=45, labelsize=9)
+
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.set_xlabel('日期', fontsize=11)
+        ax.set_ylabel(ylabel, fontsize=11)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=9, frameon=True)
+        plt.tight_layout()
+
+    plt.show()
+
 
 if __name__ == "__main__":
-    seg_csv_file = "20250101_20261027沈伯洋LTN_news_seg.csv"
-    raw_csv_file = "20250101_20261027沈伯洋LTN_news.csv"
+    # file_list = ['20261027_20261106沈伯洋LTN_news.csv','20250101_20261027沈伯洋LTN_news.csv']
+    # merge_all_news(file_list,'20250101_20261106沈柏洋LTN_news.csv')
+    seg_csv_file = "20250101_20261106沈柏洋LTN_news.csv_seg.csv"
+    raw_csv_file = "20250101_20261106沈柏洋LTN_news.csv"
 
     # # 若已有斷詞檔則直接讀取，避免重複執行費時的斷詞運算
     # if os.path.exists(seg_csv_file):
@@ -222,17 +291,20 @@ if __name__ == "__main__":
     #     save_prefix="lda_best"
     # )
 
-    df = pd.read_csv("20250101_20261027沈伯洋LTN_news_seg.csv")
-    lda_model = LdaModel.load("lda_best_model_k18.model")
-    lda_dictionary =corpora.Dictionary.load("lda_best_dict.dict")
-    df['topic'] = df['seg_content'].apply(lambda x: predict_topic(lda_model,lda_dictionary, x))
-    topic_list = []
-    prob_list = []
-    for one_seg_content in df['seg_content']:
-        topic_num, prob = predict_topic(lda_model,lda_dictionary,one_seg_content)
-        topic_list.append(topic_num)
-        prob_list.append(prob)
-    df['topic'] = topic_list
-    df['topic_prob'] = prob_list
-    print(df['topic'].value_counts())
-    df.to_csv("20250101_20261027沈伯洋LTN_news_seg_topic.csv", index=False,encoding = "utf-8-sig")
+    # df = pd.read_csv("20250101_20261106沈柏洋LTN_news.csv_seg.csv")
+    # lda_model = LdaModel.load("lda_best_model_k13.model")
+    # lda_dictionary =corpora.Dictionary.load("lda_best_dict.dict")
+    # df['topic'] = df['seg_content'].apply(lambda x: predict_topic(lda_model,lda_dictionary, x))
+    # topic_list = []
+    # prob_list = []
+    # for one_seg_content in df['seg_content']:
+    #     topic_num, prob = predict_topic(lda_model,lda_dictionary,one_seg_content)
+    #     topic_list.append(topic_num)
+    #     prob_list.append(prob)
+    # df['topic'] = topic_list
+    # df['topic_prob'] = prob_list
+    # print(df['topic'].value_counts())
+    # df.to_csv("20250101_20261106沈柏洋LTN_news_seg_topic.csv", index=False,encoding = "utf-8-sig")
+
+    df = pd.read_csv("20250101_20261106沈柏洋LTN_news_seg_topic.csv")
+    draw_topic_distribute(df)
