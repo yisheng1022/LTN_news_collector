@@ -216,8 +216,9 @@ def draw_topic_distribute(df):
 
     topic_name_df = pd.read_csv('gemini_topic_namming_result.csv')
     topic_name_df['original_topic_num'] = topic_name_df['topic_id'].apply(lambda x: int(x.split(' ')[1].strip())-1)
+    topic_name_df = topic_name_df.sort_values('original_topic_num')
     topic_name_df['tmp_chinese_name'] = topic_name_df['result'].apply(lambda x: ast.literal_eval(x)['topic_name'])
-    topic_name_df['topic_chinese_name'] = topic_name_df['original_topic_num'] + topic_name_df['tmp_chinese_name']
+    topic_name_df['topic_chinese_name'] = topic_name_df['original_topic_num'].astype(str) + '_' + topic_name_df['tmp_chinese_name']
     topic_dict = dict(zip(topic_name_df['original_topic_num'], topic_name_df['topic_chinese_name']))
 
     df.dropna(subset = ['date'],ignore_index=True,inplace = True)
@@ -228,6 +229,9 @@ def draw_topic_distribute(df):
     df = df[df['pub_date'] > '2025-12-31']
     df['topic_name'] = df['topic'].map(topic_dict)
     count_df = df.groupby(['pub_date', 'topic_name']).size().unstack(fill_value=0).asfreq('D', fill_value=0)
+    ordered_cols = [c for c in topic_name_df['topic_chinese_name'] if c in count_df.columns]
+    count_df = count_df[ordered_cols]
+
     smooth_df = count_df.rolling(window=7, min_periods=1).mean()
 
     num_topics = len(count_df.columns)
@@ -240,7 +244,7 @@ def draw_topic_distribute(df):
     ]
 
     for data_df, title, ylabel in plot_configs:
-        fig, ax = plt.subplots(figsize=(16, 9))
+        fig, ax = plt.subplots(figsize=(16, 9),layout='constrained')
 
         for idx, col in enumerate(data_df.columns):
             ax.plot(
@@ -261,8 +265,8 @@ def draw_topic_distribute(df):
         ax.set_xlabel('日期', fontsize=11)
         ax.set_ylabel(ylabel, fontsize=11)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=9, frameon=True)
-        plt.tight_layout()
+        ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left', fontsize=8, frameon=True)
+        # plt.tight_layout()
 
     plt.show()
 
