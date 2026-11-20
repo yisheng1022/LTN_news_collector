@@ -216,8 +216,9 @@ def draw_topic_distribute(df):
 
     topic_name_df = pd.read_csv('gemini_topic_namming_result.csv')
     topic_name_df['original_topic_num'] = topic_name_df['topic_id'].apply(lambda x: int(x.split(' ')[1].strip())-1)
-    topic_name_df['topic_chinese_name'] = topic_name_df['result'].apply(lambda x: ast.literal_eval(x)['topic_name'])
-
+    topic_name_df['tmp_chinese_name'] = topic_name_df['result'].apply(lambda x: ast.literal_eval(x)['topic_name'])
+    topic_name_df['topic_chinese_name'] = topic_name_df['original_topic_num'] + topic_name_df['tmp_chinese_name']
+    topic_dict = dict(zip(topic_name_df['original_topic_num'], topic_name_df['topic_chinese_name']))
 
     df.dropna(subset = ['date'],ignore_index=True,inplace = True)
     df['pub_date'] = df['date'].apply(lambda x: str(x).split(' ')[0])
@@ -225,8 +226,8 @@ def draw_topic_distribute(df):
     
     df['pub_date'] = pd.to_datetime(df['pub_date'], format = "%Y/%m/%d")
     df = df[df['pub_date'] > '2025-12-31']
-    df
-    count_df = df.groupby(['pub_date', 'topic']).size().unstack(fill_value=0).asfreq('D', fill_value=0)
+    df['topic_name'] = df['topic'].map(topic_dict)
+    count_df = df.groupby(['pub_date', 'topic_name']).size().unstack(fill_value=0).asfreq('D', fill_value=0)
     smooth_df = count_df.rolling(window=7, min_periods=1).mean()
 
     num_topics = len(count_df.columns)
